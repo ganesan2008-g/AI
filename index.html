@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Thunai – Safety Companion</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" defer></script>
+<style>
+:root{--bg:#0b1020;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.12);--txt:#f2f5ff;--mut:#9aa6c7;--red:#ff4d6d;--org:#ff8a5c;--teal:#2de2c4;--vio:#7c6cff;--ok:#38d996}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil",sans-serif}
+body{min-height:100vh;background:radial-gradient(900px 500px at 85% -10%,rgba(124,108,255,.35),transparent 60%),radial-gradient(700px 500px at -10% 20%,rgba(255,77,109,.28),transparent 60%),radial-gradient(600px 400px at 50% 110%,rgba(45,226,196,.18),transparent 60%),var(--bg);background-attachment:fixed}
+.app{max-width:480px;margin:0 auto;padding:14px 16px 110px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:.3px}
+.logo i{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--red),var(--vio));display:grid;place-items:center;font-style:normal;box-shadow:0 6px 20px rgba(255,77,109,.4)}
+.chip{font-size:12px;padding:7px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--mut);display:flex;gap:6px;align-items:center;cursor:pointer;max-width:58%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:8px;height:8px;border-radius:50%;background:#777;flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 0 4px rgba(56,217,150,.2);animation:bl 1.6s infinite}
+.dot.err{background:var(--red)}
+@keyframes bl{50%{opacity:.45}}
+.view{display:none;animation:fi .25s ease}
+.view.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+h2{margin:0 0 4px;font-size:22px}
+h3{margin:0 0 10px;font-size:16px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 12px;line-height:1.45}
+.hello{display:flex;align-items:center;gap:14px}
+.avatar{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--vio),var(--teal));display:grid;place-items:center;font-size:26px;overflow:hidden;flex:none;border:2px solid var(--line)}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.1)}
+.tag.b{background:rgba(255,77,109,.25);color:#ffc2cd}
+.sosWrap{display:grid;place-items:center;padding:14px 0 6px}
+.sosBtn{position:relative;width:210px;height:210px;border-radius:50%;border:0;color:#fff;cursor:pointer;background:radial-gradient(circle at 35% 30%,#ff8fa3,var(--red) 45%,#c1103a);box-shadow:0 18px 50px rgba(255,77,109,.55),inset 0 -10px 24px rgba(0,0,0,.25);touch-action:none;user-select:none;-webkit-user-select:none}
+.sosBtn::before,.sosBtn::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,77,109,.7);animation:pl 2.4s infinite;pointer-events:none}
+.sosBtn::after{animation-delay:1.2s}
+@keyframes pl{from{transform:scale(1);opacity:.9}to{transform:scale(1.45);opacity:0}}
+.sosBtn svg{position:absolute;inset:-9px;width:calc(100% + 18px);height:calc(100% + 18px);transform:rotate(-90deg);pointer-events:none}
+.sosBtn circle{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-dasharray:603.2;stroke-dashoffset:603.2}
+.sosBtn b{display:block;font-size:26px;letter-spacing:1.5px;line-height:1.1}
+.sosBtn small{display:block;margin-top:6px;font-size:12px;opacity:.9}
+.sosBtn span.i{font-size:42px;display:block;margin-bottom:4px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;text-align:left;color:var(--txt);cursor:pointer;font:inherit}
+.tile:active{transform:scale(.97)}
+.tile .e{font-size:28px;display:block;margin-bottom:8px}
+.tile b{font-size:14px;display:block}
+.tile small{color:var(--mut);font-size:11.5px}
+label{display:block;font-size:12.5px;color:var(--mut);margin:12px 0 6px;font-weight:600}
+input,textarea,select{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);font:inherit;font-size:15px;outline:none}
+input:focus,textarea:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(124,108,255,.25)}
+input::placeholder,textarea::placeholder{color:#6f7a9b}
+input[type=time],input[type=date]{color-scheme:dark}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.opt{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.opt.sel{background:linear-gradient(135deg,var(--red),var(--org));border-color:transparent;box-shadow:0 6px 18px rgba(255,77,109,.35)}
+.blood .opt{min-width:62px;text-align:center}
+.btn{width:100%;padding:15px;border-radius:16px;border:0;font:inherit;font-weight:800;font-size:16px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--vio),#5b8cff);box-shadow:0 10px 26px rgba(124,108,255,.4)}
+.btn.red{background:linear-gradient(135deg,var(--red),var(--org));box-shadow:0 10px 26px rgba(255,77,109,.4)}
+.btn.ok{background:linear-gradient(135deg,#1fbf8f,var(--ok));color:#052;box-shadow:0 10px 26px rgba(56,217,150,.35)}
+.btn.ghost{background:var(--card);border:1px solid var(--line);box-shadow:none;color:var(--txt)}
+.btn.sm{padding:10px 14px;font-size:13px;width:auto;border-radius:12px}
+.btn+.btn{margin-top:10px}
+.photo{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:6px}
+.photo .avatar{width:104px;height:104px;font-size:42px;cursor:pointer;position:relative}
+.photo small{color:var(--mut)}
+.back{background:none;border:0;color:var(--mut);font:inherit;font-size:14px;margin-bottom:10px;cursor:pointer;padding:0}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:rgba(11,16,32,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line)}
+nav div{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+nav button{background:none;border:0;color:var(--mut);font:inherit;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;cursor:pointer}
+nav button span{font-size:21px}
+nav button.active{color:#fff;background:rgba(255,255,255,.1)}
+.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,8,18,.88);backdrop-filter:blur(10px)}
+.overlay.show{display:flex}
+.box{width:100%;max-width:400px;background:#141a33;border:1px solid var(--line);border-radius:26px;padding:22px;text-align:center;max-height:92vh;overflow:auto}
+.box.red{background:linear-gradient(160deg,#3a0f1c,#141a33)}
+.big{font-size:84px;font-weight:900;line-height:1;margin:10px 0;background:linear-gradient(135deg,var(--red),var(--org));-webkit-background-clip:text;background-clip:text;color:transparent}
+.timer{font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center;margin:8px 0}
+.item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line);margin-bottom:10px}
+.item .t{flex:1;min-width:0}.item .t b{display:block;font-size:14.5px}.item .t small{color:var(--mut);font-size:12px}
+.item .ico{font-size:24px}
+.item a.go{padding:8px 12px;border-radius:12px;background:rgba(45,226,196,.18);color:var(--teal);font-weight:700;font-size:12.5px;text-decoration:none}
+.del{background:none;border:0;color:#ff7a90;font-size:20px;cursor:pointer}
+.banner{border-radius:18px;padding:14px;margin-bottom:14px;background:linear-gradient(135deg,rgba(255,77,109,.3),rgba(255,138,92,.2));border:1px solid rgba(255,77,109,.5)}
+.banner.good{background:linear-gradient(135deg,rgba(56,217,150,.25),rgba(45,226,196,.12));border-color:rgba(56,217,150,.5)}
+.banner b{display:block;margin-bottom:4px}
+.banner .row{margin-top:10px}
+#map{height:240px;border-radius:18px;margin-bottom:12px;border:1px solid var(--line);display:none}
+.log{font-size:13px;display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)}
+.log .miss{color:#ff7a90;font-weight:700}.log .tk{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:#fff;color:#111;padding:11px 18px;border-radius:99px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.aid h4{margin:0 0 6px;font-size:15px}
+.aid ol{margin:6px 0 0;padding-left:20px;font-size:13.5px;line-height:1.6;color:#dfe5ff}
+details{margin-top:12px}summary{cursor:pointer;color:var(--mut);font-size:13px;font-weight:600}
+/* Calculator */
+#calc{position:fixed;inset:0;z-index:100;background:#000;display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);user-select:none;-webkit-user-select:none}
+#calc.show{display:flex}
+#cdisp{flex:1;display:flex;align-items:flex-end;justify-content:flex-end;padding:20px 26px;font-size:72px;font-weight:300;color:#fff;overflow:hidden;word-break:break-all;text-align:right}
+#ckeys{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px;max-width:480px;width:100%;margin:0 auto}
+#ckeys button{aspect-ratio:1;border-radius:50%;border:0;font-size:30px;color:#fff;background:#333;cursor:pointer;font-family:-apple-system,Roboto,sans-serif}
+#ckeys button:active{filter:brightness(1.5)}
+#ckeys .op{background:#ff9f0a}#ckeys .fn{background:#a5a5a5;color:#000}
+#ckeys .zero{grid-column:span 2;aspect-ratio:auto;border-radius:99px;text-align:left;padding-left:34px}
+/* Elder mode */
+body.elder{font-size:19px}
+body.elder nav,body.elder .noelder{display:none!important}
+body.elder .app{padding-bottom:30px}
+body.elder .sosBtn{width:290px;height:290px}
+body.elder .sosBtn b{font-size:36px}
+body.elder .sosBtn small{font-size:16px}
+body.elder .card{border-width:2px}
+body.elder .btn{font-size:22px;padding:22px}
+body.elder .chip{font-size:15px}
+body.elder .hello h2{font-size:28px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo"><i>🛡️</i>Thunai</div>
+    <div class="chip" id="locChip"><span class="dot" id="locDot"></span><span id="locTxt">Locating…</span></div>
+  </header>
+
+  <!-- HOME -->
+  <section class="view active" id="v-home">
+    <div id="pendingBox"></div>
+    <div id="checkBox"></div>
+    <div class="card hello">
+      <div class="avatar" id="hAvatar">👤</div>
+      <div style="min-width:0">
+        <h2 id="hName">Welcome</h2>
+        <div class="tags" id="hTags"></div>
+      </div>
+    </div>
+    <div class="sosWrap">
+      <button class="sosBtn" id="sosBtn" aria-label="Emergency alert. Press and hold">
+        <svg viewBox="0 0 210 210"><circle id="ring" cx="105" cy="105" r="96"/></svg>
+        <span class="i">🚨</span><b>EMERGENCY</b><small>Press &amp; hold to alert</small>
+      </button>
+    </div>
+    <p class="sub" style="text-align:center">Your live location and details go to your emergency contacts.</p>
+    <div class="card" id="checkCard">
+      <h3>✅ Daily Check-in</h3>
+      <p class="sub" id="checkSub">Tap once a day. If you miss it, your family is alerted.</p>
+      <button class="btn ok" id="checkBtn">I'm Safe Today</button>
+    </div>
+    <div class="tiles noelder">
+      <button class="tile" data-go="calc"><span class="e">🧮</span><b>Silent SOS</b><small>Disguised as calculator</small></button>
+      <button class="tile" data-go="aid"><span class="e">🩺</span><b>First-Aid Guide</b><small>Works offline</small></button>
+      <button class="tile" data-go="vol"><span class="e">🤝</span><b>Neighbour Responders</b><small>Nearby volunteers</small></button>
+      <button class="tile" data-go="ev"><span class="e">🎙️</span><b>Evidence</b><small>Saved recordings</small></button>
+    </div>
+    <button class="btn ghost noelder" style="margin-top:14px" id="elderOn">👵 Switch to Elder Mode</button>
+    <button class="btn ghost" style="margin-top:14px;display:none" id="elderOff">Exit Elder Mode</button>
+  </section>
+
+  <!-- NEARBY -->
+  <section class="view" id="v-nearby">
+    <h2>Nearby Help</h2>
+    <p class="sub">Find the closest hospitals, police stations, pharmacies and fire stations.</p>
+    <div class="chips" id="catChips" style="margin-bottom:12px">
+      <button class="opt sel" data-c="hospital">🏥 Hospital</button>
+      <button class="opt" data-c="police">👮 Police</button>
+      <button class="opt" data-c="pharmacy">💊 Pharmacy</button>
+      <button class="opt" data-c="fire">🚒 Fire</button>
+    </div>
+    <div id="map"></div>
+    <div id="nearList"><div class="card sub">Tap a category to search around your live location.</div></div>
+    <a class="btn ghost" id="gmapsLink" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Open in Google Maps</a>
+  </section>
+
+  <!-- JOURNEY -->
+  <section class="view" id="v-journey">
+    <h2>Safe Journey Timer</h2>
+    <p class="sub">Set how long you'll take. If you don't tap "Reached", an SOS countdown starts automatically.</p>
+    <div id="jSet" class="card">
+      <label>Time needed (minutes)</label>
+      <div class="chips" id="jChips">
+        <button class="opt" data-m="15">15</button><button class="opt sel" data-m="30">30</button><button class="opt" data-m="45">45</button><button class="opt" data-m="60">60</button>
+      </div>
+      <input type="number" id="jMin" min="1" max="600" value="30" style="margin-top:10px">
+      <label>Going to (optional)</label>
+      <input id="jDest" placeholder="e.g. Home, Office">
+      <button class="btn" style="margin-top:16px" id="jStart">Start Journey</button>
+    </div>
+    <div id="jRun" class="card" style="display:none;text-align:center">
+      <p class="sub" id="jTo"></p>
+      <div class="timer" id="jTime">00:00</div>
+      <button class="btn ok" id="jReach">✔ I've Reached Safely</button>
+      <button class="btn ghost" id="jExt">+10 minutes</button>
+    </div>
+  </section>
+
+  <!-- MEDS -->
+  <section class="view" id="v-meds">
+    <h2>Medicine Reminder</h2>
+    <p class="sub">Reminders are spoken in Tamil. Keep this app open for alerts.</p>
+    <div class="card">
+      <div class="row">
+        <div><label>Medicine</label><input id="mName" placeholder="e.g. BP tablet"></div>
+        <div><label>Time</label><input type="time" id="mTime" value="08:00"></div>
+      </div>
+      <button class="btn" style="margin-top:14px" id="mAdd">+ Add Reminder</button>
+      <button class="btn ghost" id="mTest">🔊 Test Tamil Voice</button>
+    </div>
+    <div id="mList"></div>
+    <div class="card"><h3>Dose History</h3><p class="sub" id="mStat"></p><div id="mLog"></div></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="view" id="v-profile">
+    <h2>My Profile</h2>
+    <p class="sub">This is shared with your emergency contacts when you need help.</p>
+    <div class="card">
+      <div class="photo">
+        <div class="avatar" id="pAvatar">📷</div>
+        <small>Tap to add photo</small>
+        <input type="file" id="pFile" accept="image/*" hidden>
+      </div>
+      <label>Full Name *</label><input id="pName" placeholder="Your full name" autocomplete="name">
+      <div class="row">
+        <div><label>Date of Birth *</label><input type="date" id="pDob"></div>
+        <div><label>Age</label><input id="pAge" readonly placeholder="Auto"></div>
+      </div>
+      <label>Gender *</label>
+      <div class="chips" id="gChips"><button class="opt" data-v="Male">Male</button><button class="opt" data-v="Female">Female</button><button class="opt" data-v="Other">Other</button></div>
+      <label>Blood Group *</label>
+      <div class="chips blood" id="bChips"></div>
+      <label>Address *</label>
+      <textarea id="pAddr" rows="3" placeholder="House no, street, area, city, PIN"></textarea>
+      <button class="btn ghost sm" style="margin-top:8px" id="pGeo">📍 Auto-fill from my location</button>
+      <label>Medical notes (allergies, conditions)</label>
+      <input id="pMed" placeholder="Optional">
+    </div>
+    <div class="card">
+      <h3>Emergency Contacts *</h3>
+      <div id="cList"></div>
+    </div>
+    <div class="card">
+      <h3>Safety Settings</h3>
+      <div class="row">
+        <div><label>Daily check-in time</label><input type="time" id="pCheck" value="09:00"></div>
+        <div><label>Secret code (calculator)</label><input id="pCode" inputmode="numeric" maxlength="8" value="1234"></div>
+      </div>
+      <p class="sub" style="margin-top:8px">Silent SOS: type the secret code then “=” on the calculator. Exit calculator with 9999 then “=”.</p>
+      <details>
+        <summary>Advanced: silent alerts via Telegram (optional)</summary>
+        <p class="sub" style="margin-top:8px">A web page cannot send SMS silently. With a Telegram bot, location and audio can be sent to family without any visible screen. Create a bot with @BotFather, and add the bot to a family group.</p>
+        <label>Bot token</label><input id="pTok" placeholder="123456:ABC...">
+        <label>Chat ID</label><input id="pChat" placeholder="-100123456789">
+      </details>
+    </div>
+    <button class="btn red" id="pSave">💾 Save Profile</button>
+  </section>
+
+  <!-- FIRST AID -->
+  <section class="view" id="v-aid">
+    <button class="back" data-go="home">← Back</button>
+    <h2>First-Aid Guide</h2>
+    <p class="sub">Type a symptom (bleeding, burn, chest pain, choking…). Works without internet. This is basic guidance — always get professional medical help.</p>
+    <input id="aidQ" placeholder="🔎 Search symptom or emergency">
+    <div id="aidList" style="margin-top:14px"></div>
+  </section>
+
+  <!-- VOLUNTEERS -->
+  <section class="view" id="v-vol">
+    <button class="back" data-go="home">← Back</button>
+    <h2>Neighbour Responders</h2>
+    <p class="sub">Nearby volunteers can be alerted when you need help. Real alerts need an online backend (e.g. Firebase) — this screen is a working demo of the flow.</p>
+    <div class="card">
+      <h3>I can help others</h3>
+      <button class="btn ghost" id="volTog">Register as volunteer</button>
+    </div>
+    <button class="btn red" id="volAlert">Alert nearby volunteers (demo)</button>
+    <div id="volList" style="margin-top:14px"></div>
+  </section>
+
+  <!-- EVIDENCE -->
+  <section class="view" id="v-ev">
+    <button class="back" data-go="home">← Back</button>
+    <h2>Saved Evidence</h2>
+    <p class="sub">30-second audio recordings made by Silent SOS. Stored only on this phone.</p>
+    <div id="evList"></div>
+  </section>
+</div>
+
+<nav><div id="nav">
+  <button data-go="home" class="active"><span>🏠</span>Home</button>
+  <button data-go="nearby"><span>📍</span>Nearby</button>
+  <button data-go="journey"><span>🧭</span>Journey</button>
+  <button data-go="meds"><span>💊</span>Medicine</button>
+  <button data-go="profile"><span>👤</span>Profile</button>
+</div></nav>
+
+<!-- SOS countdown -->
+<div class="overlay" id="sos"><div class="box red">
+  <h2>🚨 Sending Alert</h2>
+  <p class="sub" id="sosWhy"></p>
+  <div class="big" id="sosCount">5</div>
+  <button class="btn red" id="sosNow">Send Now</button>
+  <button class="btn ghost" id="sosCancel">I'm Safe – Cancel</button>
+</div></div>
+
+<!-- Alert actions -->
+<div class="overlay" id="alertP"><div class="box">
+  <h2 id="apTitle">Alert Ready</h2>
+  <p class="sub" id="apSub">Send it to your emergency contacts now.</p>
+  <div id="apBtns"></div>
+  <button class="btn ghost" id="apClose">Close</button>
+</div></div>
+
+<!-- Medicine alert -->
+<div class="overlay" id="medP"><div class="box">
+  <div style="font-size:60px">💊</div>
+  <h2>மாத்திரை சாப்பிடும் நேரம்</h2>
+  <p class="sub">Time to take your medicine</p>
+  <div class="big" style="font-size:34px" id="medName"></div>
+  <button class="btn ok" id="medTaken">✔ Taken</button>
+  <button class="btn ghost" id="medSkip">Skip</button>
+</div></div>
+
+<!-- Calculator disguise -->
+<div id="calc">
+  <div id="cdisp">0</div>
+  <div id="ckeys"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem('th_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('th_'+k,JSON.stringify(v))}catch(e){toast('Storage is full')}}};
+const todayKey=()=>new Date().toLocaleDateString('en-CA');
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2600)}
+function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+function notify(title,body){try{if(!('Notification'in window)||Notification.permission!=='granted')return;if(window.swReg)window.swReg.showNotification(title,{body,icon:'icon.svg',vibrate:[200,100,200]});else new Notification(title,{body})}catch(e){}}
+document.addEventListener('click',()=>{if('Notification'in window&&Notification.permission==='default')Notification.requestPermission()},{once:true});
+
+/* ---------- State ---------- */
+let prof=LS.get('prof',{contacts:[{},{},{}],code:'1234',check:'09:00'});
+let meds=LS.get('meds',[]);
+let medLog=LS.get('medLog',[]);
+let pos=null;
+
+/* ---------- Navigation ---------- */
+const views=['home','nearby','journey','meds','profile','aid','vol','ev'];
+function show(v){
+  if(v==='calc'){enterCalc();return}
+  views.forEach(x=>$('v-'+x).classList.toggle('active',x===v));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===v));
+  window.scrollTo({top:0});
+  if(v==='ev')renderEv();
+  if(v==='aid')renderAid();
+  if(v==='meds')renderMeds();
+  if(v==='journey')renderJourney();
+  if(v==='vol')renderVol();
+  if(v==='nearby'&&nmap)setTimeout(()=>nmap.invalidateSize(),150);
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)show(b.dataset.go)});
+
+/* ---------- Location (auto-on) ---------- */
+function setLoc(){
+  const dot=$('locDot'),t=$('locTxt');
+  if(pos){dot.className='dot on';t.textContent='Live · '+pos.lat.toFixed(4)+', '+pos.lng.toFixed(4)+' (±'+pos.acc+'m)'}
+  else if(setLoc.err){dot.className='dot err';t.textContent=setLoc.err}
+  else{dot.className='dot';t.textContent='Locating…'}
+  $('gmapsLink').href=pos?`https://www.google.com/maps/search/hospital/@${pos.lat},${pos.lng},14z`:'https://www.google.com/maps';
+}
+function startGeo(){
+  if(!navigator.geolocation){setLoc.err='Location unsupported';setLoc();return}
+  navigator.geolocation.watchPosition(p=>{pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};setLoc.err=null;setLoc()},
+    e=>{setLoc.err=e.code===1?'Location blocked – tap to retry':'Location unavailable';setLoc()},
+    {enableHighAccuracy:true,maximumAge:5000,timeout:25000});
+}
+$('locChip').onclick=()=>{if(!pos){setLoc.err=null;setLoc();startGeo()}else window.open(`https://www.google.com/maps?q=${pos.lat},${pos.lng}`,'_blank')};
+function getPos(){return new Promise(r=>{if(pos)return r(pos);if(!navigator.geolocation)return r(null);navigator.geolocation.getCurrentPosition(p=>{pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};setLoc();r(pos)},()=>r(null),{enableHighAccuracy:true,timeout:12000})})}
+
+/* ---------- Profile ---------- */
+const sel={gender:'',blood:''};
+['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(b=>{const x=document.createElement('button');x.className='opt';x.dataset.v=b;x.textContent=b;$('bChips').appendChild(x)});
+function pickChips(id,key){$(id).addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b)return;sel[key]=b.dataset.v;paintChips()})}
+function paintChips(){document.querySelectorAll('#gChips .opt').forEach(b=>b.classList.toggle('sel',b.dataset.v===sel.gender));document.querySelectorAll('#bChips .opt').forEach(b=>b.classList.toggle('sel',b.dataset.v===sel.blood))}
+pickChips('gChips','gender');pickChips('bChips','blood');
+function calcAge(d){if(!d)return'';const b=new Date(d),n=new Date();let a=n.getFullYear()-b.getFullYear();const m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return a>=0?a:''}
+$('pDob').addEventListener('change',()=>{$('pAge').value=calcAge($('pDob').value)});
+$('cList').innerHTML=[0,1,2].map(i=>`<label>${i===0?'Contact 1 *':'Contact '+(i+1)+' (optional)'}</label><div class="row"><input id="cn${i}" placeholder="Name"><input id="cp${i}" type="tel" inputmode="tel" placeholder="Phone"></div>`).join('');
+let photoData=prof.photo||'';
+$('pAvatar').onclick=()=>$('pFile').click();
+$('pFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image();const url=URL.createObjectURL(f);
+  img.onload=()=>{const s=320,c=document.createElement('canvas');const r=Math.min(1,s/Math.max(img.width,img.height));c.width=img.width*r;c.height=img.height*r;c.getContext('2d').drawImage(img,0,0,c.width,c.height);photoData=c.toDataURL('image/jpeg',.8);$('pAvatar').innerHTML=`<img src="${photoData}" alt="">`;URL.revokeObjectURL(url)};
+  img.src=url;
+};
+$('pGeo').onclick=async()=>{
+  const p=await getPos();if(!p)return toast('Turn on location permission first');
+  toast('Finding address…');
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.lat}&lon=${p.lng}`);const j=await r.json();$('pAddr').value=j.display_name||`${p.lat}, ${p.lng}`}
+  catch(e){$('pAddr').value=`Lat ${p.lat.toFixed(5)}, Lng ${p.lng.toFixed(5)}`;toast('Offline – coordinates added')}
+};
+function loadProfile(){
+  $('pName').value=prof.name||'';$('pDob').value=prof.dob||'';$('pAge').value=calcAge(prof.dob);
+  sel.gender=prof.gender||'';sel.blood=prof.blood||'';paintChips();
+  $('pAddr').value=prof.address||'';$('pMed').value=prof.med||'';
+  (prof.contacts||[]).forEach((c,i)=>{$('cn'+i).value=c.n||'';$('cp'+i).value=c.p||''});
+  $('pCheck').value=prof.check||'09:00';$('pCode').value=prof.code||'1234';
+  $('pTok').value=prof.tgToken||'';$('pChat').value=prof.tgChat||'';
+  if(prof.photo)$('pAvatar').innerHTML=`<img src="${prof.photo}" alt="">`;
+}
+$('pSave').onclick=()=>{
+  const name=$('pName').value.trim(),dob=$('pDob').value,addr=$('pAddr').value.trim();
+  const contacts=[0,1,2].map(i=>({n:$('cn'+i).value.trim(),p:$('cp'+i).value.replace(/[^\d+]/g,'')}));
+  if(!name)return toast('Please enter your name');
+  if(!dob)return toast('Please select date of birth');
+  if(!sel.gender)return toast('Please select gender');
+  if(!sel.blood)return toast('Please select blood group');
+  if(!addr)return toast('Please enter your address');
+  if(!contacts[0].n||contacts[0].p.replace(/\D/g,'').length<10)return toast('Add contact 1 with a valid phone number');
+  const code=$('pCode').value.replace(/\D/g,'')||'1234';
+  if(code==='9999')return toast('Code 9999 is reserved for exit');
+  prof={name,dob,gender:sel.gender,blood:sel.blood,address:addr,med:$('pMed').value.trim(),photo:photoData,contacts,check:$('pCheck').value||'09:00',code,tgToken:$('pTok').value.trim(),tgChat:$('pChat').value.trim()};
+  LS.set('prof',prof);renderHome();toast('Profile saved ✔');show('home');
+  if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
+};
+
+/* ---------- Home ---------- */
+function renderHome(){
+  const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  $('hName').textContent=prof.name?`${g}, ${prof.name.split(' ')[0]}`:'Welcome to Thunai';
+  $('hAvatar').innerHTML=prof.photo?`<img src="${prof.photo}" alt="">`:'👤';
+  $('hTags').innerHTML=prof.name?[prof.blood&&`<span class="tag b">🩸 ${esc(prof.blood)}</span>`,prof.dob&&`<span class="tag">${calcAge(prof.dob)} yrs</span>`,prof.gender&&`<span class="tag">${esc(prof.gender)}</span>`].filter(Boolean).join(''):'<span class="tag">Set up your profile →</span>';
+  renderCheck();renderPending();
+}
+function renderCheck(){
+  const done=LS.get('checkins',{})[todayKey()];
+  $('checkBtn').textContent=done?'✔ Checked in today':"I'm Safe Today";
+  $('checkBtn').disabled=!!done;$('checkBtn').style.opacity=done?.6:1;
+  $('checkSub').textContent=done?'Great! Your family knows you are safe.':`Tap before ${prof.check||'09:00'}. If you miss it, your family is alerted.`;
+}
+$('checkBtn').onclick=()=>{const c=LS.get('checkins',{});c[todayKey()]=Date.now();LS.set('checkins',c);renderCheck();toast('Checked in ✔');$('checkBox').innerHTML=''};
+function checkTick(){
+  if(!prof.name)return;
+  const now=new Date(),hm=now.toTimeString().slice(0,5);
+  const done=LS.get('checkins',{})[todayKey()];
+  if(done||hm<(prof.check||'09:00'))return;
+  const al=LS.get('checkAlerted',{});
+  if(al[todayKey()])return;
+  al[todayKey()]=1;LS.set('checkAlerted',al);
+  notify('Check-in missed','Notify your family now');
+  const text=msg('MISSED DAILY CHECK-IN – no response today');
+  sendTelegram(text);
+  openAlertPanel('⚠️ Check-in Missed',"You haven't checked in today. Notify your family:",text,true);
+}
+
+/* ---------- Messaging ---------- */
+function mapsUrl(){return pos?`https://www.google.com/maps?q=${pos.lat},${pos.lng}`:'(location unavailable)'}
+function msg(reason){return `🚨 EMERGENCY – ${reason}\n${prof.name||'Someone'} needs help${prof.blood?' (Blood group: '+prof.blood+')':''}.\nLive location: ${mapsUrl()}\n${prof.address?'Address: '+prof.address+'\n':''}${prof.med?'Medical: '+prof.med+'\n':''}Time: ${new Date().toLocaleString()}`}
+function contacts(){return (prof.contacts||[]).filter(c=>c.p&&c.p.replace(/\D/g,'').length>=10)}
+function waNum(p){const d=p.replace(/\D/g,'');return d.length===10?'91'+d:d}
+function openAlertPanel(title,sub,text,withOk){
+  $('apTitle').textContent=title;$('apSub').textContent=sub;
+  const cs=contacts();let h='';
+  if(cs.length){
+    h+=`<a class="btn red" style="display:block;text-decoration:none" href="sms:${cs.map(c=>c.p).join(',')}?&body=${encodeURIComponent(text)}">📩 SMS all contacts</a>`;
+    cs.forEach(c=>{h+=`<a class="btn ghost" style="display:block;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${waNum(c.p)}?text=${encodeURIComponent(text)}">💬 WhatsApp ${esc(c.n||c.p)}</a><a class="btn ghost" style="display:block;text-decoration:none" href="tel:${esc(c.p)}">📞 Call ${esc(c.n||c.p)}</a>`});
+  }else h+='<p class="sub">Add emergency contacts in your Profile.</p>';
+  h+=`<button class="btn ghost" id="apCopy">📋 Copy message</button>`;
+  if(navigator.share)h+=`<button class="btn ghost" id="apShare">↗ Share…</button>`;
+  if(withOk)h+=`<button class="btn ok" id="apOk">✔ I'm OK (check in)</button>`;
+  $('apBtns').innerHTML=h;
+  $('apCopy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(text).then(()=>toast('Copied'))};
+  if($('apShare'))$('apShare').onclick=()=>navigator.share({text}).catch(()=>{});
+  if($('apOk'))$('apOk').onclick=()=>{$('checkBtn').click();$('alertP').classList.remove('show')};
+  $('alertP').classList.add('show');
+}
+$('apClose').onclick=()=>$('alertP').classList.remove('show');
+async function sendTelegram(text){
+  if(!prof.tgToken||!prof.tgChat)return;
+  try{await fetch(`https://api.telegram.org/bot${prof.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:prof.tgChat,text})});
+    if(pos)await fetch(`https://api.telegram.org/bot${prof.tgToken}/sendLocation`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:prof.tgChat,latitude:pos.lat,longitude:pos.lng})})}catch(e){}
+}
+async function sendTelegramAudio(blob){
+  if(!prof.tgToken||!prof.tgChat)return;
+  try{const f=new FormData();f.append('chat_id',prof.tgChat);f.append('document',blob,'evidence.webm');await fetch(`https://api.telegram.org/bot${prof.tgToken}/sendDocument`,{method:'POST',body:f})}catch(e){}
+}
+
+/* ---------- SOS ---------- */
+let sosTimer=null,sosReason='';
+function triggerSOS(reason,secs=5){
+  if($('sos').classList.contains('show'))return;
+  sosReason=reason;let n=secs;$('sosWhy').textContent=reason;$('sosCount').textContent=n;
+  $('sos').classList.add('show');vib([300,150,300]);
+  clearInterval(sosTimer);
+  sosTimer=setInterval(()=>{n--;$('sosCount').textContent=Math.max(n,0);vib(80);if(n<=0){clearInterval(sosTimer);finishSOS()}},1000);
+}
+async function finishSOS(){
+  clearInterval(sosTimer);$('sos').classList.remove('show');
+  await getPos();
+  const text=msg(sosReason);
+  sendTelegram(text);vib([500,200,500]);
+  openAlertPanel('🚨 Alert Ready','Send now to your emergency contacts (location included).',text,false);
+  notify('SOS ready','Send to your contacts');
+}
+$('sosNow').onclick=()=>{clearInterval(sosTimer);finishSOS()};
+$('sosCancel').onclick=()=>{clearInterval(sosTimer);$('sos').classList.remove('show');toast('Alert cancelled')};
+// press & hold
+const ring=$('ring'),CIRC=603.2;let raf=null;
+function holdStart(e){
+  e.preventDefault();const t0=performance.now(),HOLD=1200;
+  const f=now=>{const p=Math.min((now-t0)/HOLD,1);ring.style.strokeDashoffset=CIRC*(1-p);
+    if(p>=1){holdEnd();triggerSOS('Emergency button pressed');return}raf=requestAnimationFrame(f)};
+  raf=requestAnimationFrame(f);
+}
+function holdEnd(){cancelAnimationFrame(raf);ring.style.strokeDashoffset=CIRC}
+const sb=$('sosBtn');
+sb.addEventListener('pointerdown',holdStart);
+['pointerup','pointerleave','pointercancel'].forEach(ev=>sb.addEventListener(ev,holdEnd));
+sb.addEventListener('contextmenu',e=>e.preventDefault());
+sb.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();triggerSOS('Emergency button pressed')}});
+
+/* ---------- IndexedDB evidence ---------- */
+const dbp=new Promise((res,rej)=>{const r=indexedDB.open('thunai',1);r.onupgradeneeded=()=>r.result.createObjectStore('ev',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function saveEv(o){const db=await dbp;return new Promise(r=>{const t=db.transaction('ev','readwrite');t.objectStore('ev').add(o);t.oncomplete=r;t.onerror=r})}
+async function allEv(){const db=await dbp;return new Promise(r=>{const q=db.transaction('ev').objectStore('ev').getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>r([])})}
+async function delEv(id){const db=await dbp;return new Promise(r=>{const t=db.transaction('ev','readwrite');t.objectStore('ev').delete(id);t.oncomplete=r})}
+async function renderEv(){
+  const list=(await allEv()).reverse();
+  $('evList').innerHTML=list.length?list.map(e=>{const u=URL.createObjectURL(e.blob);return `<div class="card"><b>${new Date(e.time).toLocaleString()}</b><p class="sub">${e.lat?`<a style="color:var(--teal)" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${e.lat},${e.lng}">View location</a>`:'No location'}</p><audio controls src="${u}" style="width:100%"></audio><div class="row" style="margin-top:10px"><a class="btn ghost sm" style="text-align:center;text-decoration:none" download="evidence-${e.time}.webm" href="${u}">⬇ Download</a><button class="btn ghost sm" data-del="${e.id}">🗑 Delete</button></div></div>`}).join(''):'<div class="card sub">No recordings yet.</div>';
+}
+$('evList').addEventListener('click',async e=>{const b=e.target.closest('[data-del]');if(b){await delEv(+b.dataset.del);renderEv()}});
+
+/* ---------- Silent SOS (calculator) ---------- */
+let silentBusy=false;
+function renderPending(){
+  const p=LS.get('pending',null);
+  $('pendingBox').innerHTML=p?`<div class="banner"><b>🔕 A Silent SOS was triggered at ${new Date(p.time).toLocaleTimeString()}</b>Audio evidence is saved. Send the alert to family now?<div class="row"><button class="btn sm red" id="pdSend">Send alert</button><button class="btn sm ghost" id="pdClr">Dismiss</button></div></div>`:'';
+  if(p){$('pdSend').onclick=()=>openAlertPanel('🔕 Silent SOS',"Notify your contacts:",p.text,false);$('pdClr').onclick=()=>{LS.set('pending',null);renderPending()}}
+}
+async function silentSOS(){
+  if(silentBusy)return;silentBusy=true;
+  await getPos();
+  const text=msg('SILENT SOS – may be unsafe, recording audio');
+  LS.set('pending',{text,time:Date.now()});
+  sendTelegram(text);
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){silentBusy=false;return}
+  try{
+    const mr=new MediaRecorder(stream),chunks=[];
+    mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+    mr.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(chunks,{type:mr.mimeType||'audio/webm'});
+      await saveEv({time:Date.now(),blob,lat:pos&&pos.lat,lng:pos&&pos.lng});sendTelegramAudio(blob);
+      if(pos)sendTelegram('📍 Updated location: '+mapsUrl());silentBusy=false};
+    mr.start();setTimeout(()=>{if(mr.state!=='inactive')mr.stop()},30000);
+  }catch(e){stream.getTracks().forEach(t=>t.stop());silentBusy=false}
+}
+const keys=[['AC','fn'],['±','fn'],['%','fn'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['0','zero'],['.'],['=','op']];
+$('ckeys').innerHTML=keys.map(k=>`<button class="${k[1]||''}" data-k="${k[0]}">${k[0]}</button>`).join('');
+let cur='0',expr='',fresh=false;
+const cd=()=>{$('cdisp').textContent=cur;$('cdisp').style.fontSize=cur.length>9?'44px':cur.length>6?'58px':'72px'};
+function compute(){
+  try{const s=(expr+cur).replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+    if(/[^0-9+\-*/.()%\s]/.test(s))return 'Error';
+    const v=Function('"use strict";return ('+s.replace(/(\d+(\.\d+)?)%/g,'($1/100)')+')')();
+    return Number.isFinite(v)?String(+v.toPrecision(10)):'Error'}catch(e){return 'Error'}
+}
+$('ckeys').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;
+  if(/\d/.test(k)){if(fresh||cur==='0'||cur==='Error'){cur=k;fresh=false}else if(cur.length<12)cur+=k}
+  else if(k==='.'){if(fresh){cur='0.';fresh=false}else if(!cur.includes('.'))cur+='.'}
+  else if(k==='AC'){cur='0';expr='';fresh=false}
+  else if(k==='±'){if(cur!=='0')cur=cur.startsWith('-')?cur.slice(1):'-'+cur}
+  else if(k==='%'){cur=String(+cur/100)}
+  else if(k==='='){
+    const entered=cur.replace(/\D/g,'');
+    if(!expr&&entered===(prof.code||'1234')){silentSOS();fresh=true;cd();return}
+    if(!expr&&entered==='9999'){exitCalc();return}
+    cur=compute();expr='';fresh=true;
+  }else{ // operator
+    if(expr&&!fresh){cur=compute()}
+    expr=cur+k;fresh=true;
+  }
+  cd();
+});
+function enterCalc(){
+  cur='0';expr='';fresh=false;cd();$('calc').classList.add('show');
+  document.title='Calculator';
+  // warm up mic permission now so Silent SOS works later without a prompt
+  if(navigator.mediaDevices)navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop())).catch(()=>{});
+}
+function exitCalc(){$('calc').classList.remove('show');document.title='Thunai – Safety Companion';renderPending();show('home')}
+
+/* ---------- Safe Journey ---------- */
+document.querySelectorAll('#jChips .opt').forEach(b=>b.onclick=()=>{$('jMin').value=b.dataset.m;document.querySelectorAll('#jChips .opt').forEach(x=>x.classList.toggle('sel',x===b))});
+$('jStart').onclick=()=>{
+  const m=parseInt($('jMin').value);if(!m||m<1)return toast('Enter minutes');
+  LS.set('journey',{end:Date.now()+m*60000,dest:$('jDest').value.trim()});renderJourney();toast('Journey started – stay safe');
+};
+$('jReach').onclick=()=>{LS.set('journey',null);renderJourney();toast('Glad you reached safely ✔')};
+$('jExt').onclick=()=>{const j=LS.get('journey',null);if(j){j.end+=600000;LS.set('journey',j)}};
+function renderJourney(){const j=LS.get('journey',null);$('jSet').style.display=j?'none':'block';$('jRun').style.display=j?'block':'none';if(j){$('jTo').textContent=j.dest?'Heading to: '+j.dest:'Journey in progress';tickJourney()}}
+function tickJourney(){
+  const j=LS.get('journey',null);if(!j)return;
+  const left=j.end-Date.now();
+  if(left<=0){LS.set('journey',null);renderJourney();notify('Journey timer ended','Alert starting');triggerSOS('Safe Journey timer expired – did not mark “Reached”'+(j.dest?' (to '+j.dest+')':''),30);return}
+  const s=Math.ceil(left/1000);$('jTime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+/* ---------- Nearby ---------- */
+const CATS={hospital:['["amenity"="hospital"]','🏥','Hospital'],police:['["amenity"="police"]','👮','Police station'],pharmacy:['["amenity"="pharmacy"]','💊','Pharmacy'],fire:['["amenity"="fire_station"]','🚒','Fire station']};
+let nmap=null,nlayer=null;
+function hav(a,b,c,d){const R=6371,r=x=>x*Math.PI/180,dl=r(c-a),dn=r(d-b);const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+async function findNearby(cat){
+  const c=CATS[cat];$('nearList').innerHTML='<div class="card sub">Searching…</div>';
+  const p=await getPos();if(!p){$('nearList').innerHTML='<div class="card sub">Location not available. Allow location permission and retry.</div>';return}
+  try{
+    const q=`[out:json][timeout:25];nwr${c[0]}(around:6000,${p.lat},${p.lng});out center 40;`;
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+    const j=await r.json();
+    const res=j.elements.map(e=>({n:(e.tags&&(e.tags.name||e.tags['name:en']))||c[2],lat:e.lat??e.center?.lat,lng:e.lon??e.center?.lon,ph:e.tags&&(e.tags.phone||e.tags['contact:phone'])})).filter(x=>x.lat).map(x=>({...x,d:hav(p.lat,p.lng,x.lat,x.lng)})).sort((a,b)=>a.d-b.d).slice(0,15);
+    $('nearList').innerHTML=res.length?res.map(x=>`<div class="item"><div class="ico">${c[1]}</div><div class="t"><b>${esc(x.n)}</b><small>${x.d.toFixed(1)} km away${x.ph?' · '+esc(x.ph):''}</small></div><a class="go" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${x.lat},${x.lng}">Go</a></div>`).join(''):`<div class="card sub">No ${c[2].toLowerCase()} found within 6 km.</div>`;
+    drawMap(p,res,c[1]);
+  }catch(e){$('nearList').innerHTML='<div class="card sub">Could not load nearby places. Check your internet connection.</div>'}
+}
+function drawMap(p,res,icon){
+  if(!window.L)return;const m=$('map');m.style.display='block';
+  if(!nmap){nmap=L.map('map',{zoomControl:true}).setView([p.lat,p.lng],14);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(nmap);nlayer=L.layerGroup().addTo(nmap)}
+  nlayer.clearLayers();
+  L.circleMarker([p.lat,p.lng],{radius:9,color:'#fff',weight:3,fillColor:'#ff4d6d',fillOpacity:1}).addTo(nlayer).bindPopup('You are here');
+  const pts=[[p.lat,p.lng]];
+  res.forEach(x=>{L.marker([x.lat,x.lng]).addTo(nlayer).bindPopup(esc(x.n));pts.push([x.lat,x.lng])});
+  nmap.fitBounds(pts,{padding:[30,30],maxZoom:15});setTimeout(()=>nmap.invalidateSize(),100);
+}
+$('catChips').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b)return;document.querySelectorAll('#catChips .opt').forEach(x=>x.classList.toggle('sel',x===b));findNearby(b.dataset.c)});
+document.querySelector('[data-go="nearby"]').addEventListener('click',()=>{if(!nearby_done){nearby_done=true;findNearby('hospital')}});
+let nearby_done=false;
+
+/* ---------- Medicine (Tamil voice) ---------- */
+function speakTa(text){
+  if(!('speechSynthesis'in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ta-IN';u.rate=.9;
+    const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith('ta'));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}
+}
+if('speechSynthesis'in window)speechSynthesis.getVoices();
+$('mTest').onclick=()=>speakTa('மாத்திரை சாப்பிடும் நேரம்');
+$('mAdd').onclick=()=>{const n=$('mName').value.trim(),t=$('mTime').value;if(!n||!t)return toast('Enter medicine name and time');meds.push({id:Date.now(),n,t});LS.set('meds',meds);$('mName').value='';renderMeds();toast('Reminder added')};
+function renderMeds(){
+  meds.sort((a,b)=>a.t.localeCompare(b.t));
+  $('mList').innerHTML=meds.length?meds.map(m=>`<div class="item"><div class="ico">💊</div><div class="t"><b>${esc(m.n)}</b><small>Every day at ${esc(m.t)}</small></div><button class="del" data-m="${m.id}">✕</button></div>`).join(''):'<div class="card sub">No reminders yet.</div>';
+  const week=Date.now()-7*864e5,recent=medLog.filter(l=>l.ts>week);
+  $('mStat').textContent=`Last 7 days: ${recent.filter(l=>l.s==='Taken').length} taken · ${recent.filter(l=>l.s==='Missed').length} missed · ${recent.filter(l=>l.s==='Skipped').length} skipped`;
+  $('mLog').innerHTML=medLog.slice(-15).reverse().map(l=>`<div class="log"><span>${esc(l.n)} · ${esc(l.d)} ${esc(l.t)}</span><span class="${l.s==='Missed'?'miss':l.s==='Taken'?'tk':''}">${l.s}</span></div>`).join('')||'<p class="sub">Nothing recorded yet.</p>';
+}
+$('mList').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(b){meds=meds.filter(m=>m.id!=b.dataset.m);LS.set('meds',meds);renderMeds()}});
+let medQ=[],medAct=null,medRep=null,medTO=null;
+function logMed(n,s){medLog.push({n,s,d:todayKey(),t:new Date().toTimeString().slice(0,5),ts:Date.now()});medLog=medLog.slice(-200);LS.set('medLog',medLog)}
+function medNext(){if(medAct||!medQ.length)return;medAct=medQ.shift();$('medName').textContent=medAct.n;$('medP').classList.add('show');
+  const say=()=>{speakTa('மாத்திரை சாப்பிடும் நேரம். '+medAct.n+' மாத்திரை எடுத்துக்கொள்ளுங்கள்.');vib([400,200,400])};
+  say();notify('💊 மாத்திரை சாப்பிடும் நேரம்',medAct.n);
+  medRep=setInterval(say,60000);
+  medTO=setTimeout(()=>medDone('Missed'),10*60000)}
+function medDone(s){clearInterval(medRep);clearTimeout(medTO);if(medAct)logMed(medAct.n,s);medAct=null;$('medP').classList.remove('show');try{speechSynthesis.cancel()}catch(e){}renderMeds();medNext()}
+$('medTaken').onclick=()=>medDone('Taken');$('medSkip').onclick=()=>medDone('Skipped');
+function medTick(){
+  const hm=new Date().toTimeString().slice(0,5),day=todayKey(),f=LS.get('medFired',{});
+  meds.forEach(m=>{const k=day+m.id;if(m.t===hm&&!f[k]){f[k]=1;LS.set('medFired',f);medQ.push(m)}});
+  const keys=Object.keys(f);if(keys.length>300){keys.slice(0,150).forEach(k=>delete f[k]);LS.set('medFired',f)}
+  medNext();
+}
+
+/* ---------- First aid (offline) ---------- */
+const AID=[
+ {t:'Heart attack / chest pain',k:'chest pain heart attack pressure sweating left arm',s:['Call emergency services immediately.','Sit the person down, keep them calm and still.','Loosen tight clothing.','If they are conscious, not allergic and have no bleeding disorder, they may chew one 300 mg aspirin.','If they become unresponsive and not breathing normally, start CPR.']},
+ {t:'CPR (adult, not breathing)',k:'cpr unconscious not breathing cardiac arrest collapse',s:['Check response: shout and tap shoulders. Check breathing for up to 10 seconds.','Call emergency services (or ask someone else to) and get an AED if available.','Place the heel of your hand on the centre of the chest, other hand on top.','Push hard and fast: about 5–6 cm deep, 100–120 times per minute.','Do not stop until help arrives or the person starts to breathe normally. Hands-only CPR is fine if untrained.']},
+ {t:'Severe bleeding',k:'bleeding blood cut wound injury',s:['Apply firm direct pressure with a clean cloth.','If blood soaks through, add more cloth on top — do not remove the first.','Raise the injured limb above heart level if possible.','Keep the person lying down and warm.','Seek emergency help for heavy bleeding.']},
+ {t:'Burns',k:'burn fire scald hot water',s:['Cool the burn under cool running water for 20 minutes.','Remove rings or tight items near the area before it swells.','Cover loosely with clean cling film or a clean non-fluffy cloth.','No ice, butter, toothpaste or oil. Do not burst blisters.','Get medical help for large, deep, face or hand burns.']},
+ {t:'Choking (adult)',k:'choking cant breathe food stuck throat',s:['Ask "Are you choking?" and encourage coughing.','If they cannot cough, speak or breathe: give 5 firm back blows between the shoulder blades.','Then give 5 abdominal thrusts (Heimlich): fist above the navel, pull sharply inwards and upwards.','Repeat 5 blows + 5 thrusts. If they collapse, call emergency services and start CPR.']},
+ {t:'Seizure / fits',k:'seizure fit epilepsy convulsion',s:['Stay calm, note the time.','Clear hard objects away and cushion the head.','Do NOT hold them down or put anything in their mouth.','When shaking stops, turn them onto their side (recovery position).','Call emergency services if it lasts over 5 minutes, repeats, or they are injured or not waking up.']},
+ {t:'Fainting',k:'faint dizzy unconscious blackout',s:['Lay the person flat and raise their legs about 30 cm.','Loosen tight clothing and give fresh air.','Check breathing. If not breathing normally, start CPR.','If they do not recover within a minute, call emergency services.','Sit up slowly when they wake; give water once fully alert.']},
+ {t:'Stroke (FAST)',k:'stroke face droop arm weak speech slurred paralysis',s:['F – Face drooping on one side.','A – Arm weakness or numbness.','S – Speech slurred or confused.','T – Time: call emergency services at once and note when symptoms began.','Do not give food, drink or medicine. Keep them comfortable and watch breathing.']},
+ {t:'Snake bite',k:'snake bite venom poison',s:['Keep the person calm and as still as possible.','Keep the bitten limb still, at or below heart level; remove rings and tight items.','Do NOT cut, suck, tie a tight tourniquet, or apply ice.','Note the snake\'s look if safe, and go to a hospital immediately.']},
+ {t:'Suspected fracture',k:'fracture broken bone sprain fall',s:['Do not move the person if head, neck or back injury is suspected.','Support the injured part in the position found; do not straighten it.','Apply a cold pack wrapped in cloth.','Immobilise with a splint or sling and get medical help.']},
+ {t:'Low blood sugar (diabetic)',k:'sugar diabetes weak sweating shaky hypoglycemia',s:['If they are awake and able to swallow, give 15–20 g fast sugar (glucose tablets, juice, sugar in water).','Recheck after 15 minutes; repeat if still low.','If drowsy, unconscious or unable to swallow, do not give food or drink — call emergency services.']},
+ {t:'Poisoning / overdose',k:'poison overdose swallowed chemical tablets',s:['Move the person to fresh air if fumes are involved.','Do not induce vomiting.','Keep the container or tablets to show the doctors.','Call emergency services or a poison helpline immediately.']}
+];
+function renderAid(){
+  const q=($('aidQ').value||'').toLowerCase().trim();
+  const r=AID.filter(a=>!q||(a.t+' '+a.k).toLowerCase().includes(q));
+  $('aidList').innerHTML=r.length?r.map(a=>`<div class="card aid"><h4>${esc(a.t)}</h4><ol>${a.s.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`).join(''):'<div class="card sub">No match. In a real emergency, call your local emergency services.</div>';
+}
+$('aidQ').addEventListener('input',renderAid);
+
+/* ---------- Volunteers (demo) ---------- */
+function renderVol(){const on=LS.get('vol',false);$('volTog').textContent=on?'✔ You are a registered volunteer (tap to remove)':'Register as volunteer'}
+$('volTog').onclick=()=>{LS.set('vol',!LS.get('vol',false));renderVol()};
+$('volAlert').onclick=async()=>{
+  await getPos();toast('Alert sent to nearby volunteers (demo)');vib(200);
+  const names=['Ravi K.','Priya S.','Mohammed A.','Lakshmi N.'];
+  $('volList').innerHTML='<div class="card"><h3>Volunteers notified (simulated)</h3>'+names.map((n,i)=>`<div class="item"><div class="ico">🙋</div><div class="t"><b>${n}</b><small>${(0.2+i*0.35).toFixed(1)} km away · ${i===0?'On the way':'Notified'}</small></div></div>`).join('')+'<p class="sub">In the full version this runs on Firebase: volunteers within a few hundred metres get a push alert with your location.</p></div>';
+};
+
+/* ---------- Elder mode ---------- */
+function setElder(on){LS.set('elder',on);document.body.classList.toggle('elder',on);$('elderOn').style.display=on?'none':'block';$('elderOff').style.display=on?'block':'none';if(on)show('home')}
+$('elderOn').onclick=()=>setElder(true);$('elderOff').onclick=()=>setElder(false);
+
+/* ---------- Init ---------- */
+loadProfile();renderHome();renderMeds();renderJourney();setLoc();startGeo();setElder(LS.get('elder',false));
+if(!prof.name)show('profile');
+setInterval(()=>{tickJourney();},1000);
+setInterval(()=>{medTick();checkTick()},15000);
+setTimeout(()=>{medTick();checkTick()},3000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){medTick();checkTick();tickJourney()}});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(r=>window.swReg=r).catch(()=>{});
+</script>
+</body>
+</html>
